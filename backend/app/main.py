@@ -9,7 +9,15 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Setup ML models, etc. here on startup
+    # Validate GROQ_API_KEY on startup
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key or not groq_key.startswith("gsk_"):
+        print("⚠️  WARNING: GROQ_API_KEY environment variable is not configured or invalid.")
+        print("⚠️  AI explanations & Copilot Chat will operate in rule-based fallback mode.")
+    else:
+        print("✅ GROQ_API_KEY validated successfully. XAI Engine and Copilot are active.")
+
+    # Setup ML models on startup
     from app.ml.model_manager import initialize_model
     initialize_model()
     yield

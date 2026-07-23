@@ -44,46 +44,49 @@ def generate_explanation(
     if not api_key or not api_key.startswith("gsk_"):
         return fallback
 
-    try:
-        client = Groq(api_key=api_key)
+    # Retry logic & timeout handling (15s timeout, 2 attempts)
+    max_attempts = 2
+    for attempt in range(max_attempts):
+        try:
+            client = Groq(api_key=api_key, timeout=15.0)
 
-        # ── Build rich context for the model ──────────────────────────────
-        whois = threat_intel.get("whois", {})
-        ssl = threat_intel.get("ssl", {})
+            # ── Build rich context for the model ──────────────────────────────
+            whois = threat_intel.get("whois", {})
+            ssl = threat_intel.get("ssl", {})
 
-        rules_text = "\n".join(
-            f"  - {r}" for r in triggered_rules
-        ) if triggered_rules else "  None"
+            rules_text = "\n".join(
+                f"  - {r}" for r in triggered_rules
+            ) if triggered_rules else "  None"
 
-        whois_text = (
-            f"  Domain Age: {whois.get('domain_age_days', 'Unknown')} days\n"
-            f"  Registrar: {whois.get('registrar', 'Unknown')}\n"
-            f"  Created: {whois.get('creation_date', 'Unknown')}\n"
-            f"  Expires: {whois.get('expiration_date', 'Unknown')}\n"
-            f"  DNSSEC: {whois.get('dnssec', 'Unknown')}\n"
-            f"  Recent Domain: {whois.get('is_recent_domain', False)}"
-        )
+            whois_text = (
+                f"  Domain Age: {whois.get('domain_age_days', 'Unknown')} days\n"
+                f"  Registrar: {whois.get('registrar', 'Unknown')}\n"
+                f"  Created: {whois.get('creation_date', 'Unknown')}\n"
+                f"  Expires: {whois.get('expiration_date', 'Unknown')}\n"
+                f"  DNSSEC: {whois.get('dnssec', 'Unknown')}\n"
+                f"  Recent Domain: {whois.get('is_recent_domain', False)}"
+            )
 
-        ssl_text = (
-            f"  HTTPS: {ssl.get('is_https', False)}\n"
-            f"  Issuer: {ssl.get('issuer_org', ssl.get('issuer', 'Unknown'))}\n"
-            f"  TLS Version: {ssl.get('tls_version', 'Unknown')}\n"
-            f"  Valid Until: {ssl.get('valid_to', 'Unknown')}\n"
-            f"  Days to Expiry: {ssl.get('days_to_expiry', 0)}\n"
-            f"  Self-Signed: {ssl.get('is_self_signed', 'Unknown')}\n"
-            f"  Expired: {ssl.get('is_expired', 'Unknown')}"
-        )
+            ssl_text = (
+                f"  HTTPS: {ssl.get('is_https', False)}\n"
+                f"  Issuer: {ssl.get('issuer_org', ssl.get('issuer', 'Unknown'))}\n"
+                f"  TLS Version: {ssl.get('tls_version', 'Unknown')}\n"
+                f"  Valid Until: {ssl.get('valid_to', 'Unknown')}\n"
+                f"  Days to Expiry: {ssl.get('days_to_expiry', 0)}\n"
+                f"  Self-Signed: {ssl.get('is_self_signed', 'Unknown')}\n"
+                f"  Expired: {ssl.get('is_expired', 'Unknown')}"
+            )
 
-        features_text = (
-            f"  URL Length: {features.get('urlLength', features.get('textLength', 'N/A'))}\n"
-            f"  Entropy: {features.get('entropy', 'N/A')}\n"
-            f"  HTTPS: {features.get('isHttps', 'N/A')}\n"
-            f"  IP-based: {features.get('hasIpAddress', 'N/A')}\n"
-            f"  Subdomains: {features.get('subdomains', 'N/A')}\n"
-            f"  Phishing Keywords: {features.get('suspiciousKeywords', 'N/A')}"
-        )
+            features_text = (
+                f"  URL Length: {features.get('urlLength', features.get('textLength', 'N/A'))}\n"
+                f"  Entropy: {features.get('entropy', 'N/A')}\n"
+                f"  HTTPS: {features.get('isHttps', 'N/A')}\n"
+                f"  IP-based: {features.get('hasIpAddress', 'N/A')}\n"
+                f"  Subdomains: {features.get('subdomains', 'N/A')}\n"
+                f"  Phishing Keywords: {features.get('suspiciousKeywords', 'N/A')}"
+            )
 
-        prompt = f"""You are an expert Cybersecurity SOC Analyst and XAI specialist working with the PhishGuard Enterprise Threat Engine.
+            prompt = f"""You are an expert Cybersecurity SOC Analyst and XAI specialist working with the PhishGuard Enterprise Threat Engine.
 
 The engine has already computed a VERIFIED risk assessment for the following payload. Your task is ONLY to explain these findings in clear, structured language. You must NOT change, override, or question the calculated scores.
 
@@ -128,62 +131,69 @@ Return ONLY a JSON object with this exact structure:
   "recommendations": ["string", "string", "string"]
 }}"""
 
-        completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile",
-            response_format={"type": "json_object"},
-            temperature=0.15,
-            max_tokens=1200,
-        )
+            completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.3-70b-versatile",
+                response_format={"type": "json_object"},
+                temperature=0.15,
+                max_tokens=1200,
+            )
 
-        response_text = completion.choices[0].message.content
-        parsed = json.loads(response_text)
+            response_text = completion.choices[0].message.content
+            parsed = json.loads(response_text)
 
-        # Validate structure
-        if "explanations" not in parsed:
-            parsed["explanations"] = fallback["explanations"]
-        if "recommendations" not in parsed:
-            parsed["recommendations"] = fallback["recommendations"]
-        if "executive_summary" not in parsed:
-            parsed["executive_summary"] = fallback["executive_summary"]
+            # Validate structure
+            if "explanations" not in parsed:
+                parsed["explanations"] = fallback["explanations"]
+            if "recommendations" not in parsed:
+                parsed["recommendations"] = fallback["recommendations"]
+            if "executive_summary" not in parsed:
+                parsed["executive_summary"] = fallback["executive_summary"]
 
-        return parsed
+            return parsed
 
-    except json.JSONDecodeError as e:
-        print(f"Groq JSON parse error: {e}")
-        return fallback
-    except Exception as e:
-        print(f"Groq API error: {type(e).__name__}: {e}")
-        return fallback
+        except json.JSONDecodeError as e:
+            print(f"Groq JSON parse error: {e}")
+            return fallback
+        except Exception as e:
+            print(f"Groq API attempt {attempt + 1}/{max_attempts} failed: {type(e).__name__}: {e}")
+            if attempt == max_attempts - 1:
+                return fallback
 
 
 def run_copilot_chat(messages: list) -> str:
-    """Runs Copilot chat through Groq LLaMA-3.3."""
+    """Runs Copilot chat through Groq LLaMA-3.3 with timeouts and retries."""
     api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        return "I am unable to answer right now because GROQ_API_KEY is not configured on the backend server."
-
-    try:
-        client = Groq(api_key=api_key)
-        system_prompt = (
-            "You are PhishGuard Copilot, an elite AI Cybersecurity Assistant and SOC Threat Analyst "
-            "powered by Groq LLaMA-3.3 XAI. Your mission is to help users understand phishing attacks, "
-            "social engineering, security risks, safe browsing habits, and explain scan findings. "
-            "Keep your answers concise, structured (using bullet points and bold headers), clear, and professional."
+    if not api_key or not api_key.startswith("gsk_"):
+        return (
+            "⚠️ PhishGuard Copilot is currently offline because **GROQ_API_KEY** is not configured on the backend server.\n\n"
+            "**How to resolve:** Please set `GROQ_API_KEY` in your Render Environment Variables or backend `.env` file."
         )
 
-        formatted_messages = [{"role": "system", "content": system_prompt}]
-        for m in messages:
-            formatted_messages.append({"role": m.get("role", "user"), "content": m.get("content", "")})
+    max_attempts = 2
+    for attempt in range(max_attempts):
+        try:
+            client = Groq(api_key=api_key, timeout=15.0)
+            system_prompt = (
+                "You are PhishGuard Copilot, an elite AI Cybersecurity Assistant and SOC Threat Analyst "
+                "powered by Groq LLaMA-3.3 XAI. Your mission is to help users understand phishing attacks, "
+                "social engineering, security risks, safe browsing habits, and explain scan findings. "
+                "Keep your answers concise, structured (using bullet points and bold headers), clear, and professional."
+            )
 
-        completion = client.chat.completions.create(
-            messages=formatted_messages,
-            model="llama-3.3-70b-versatile",
-            temperature=0.3,
-            max_tokens=600,
-        )
+            formatted_messages = [{"role": "system", "content": system_prompt}]
+            for m in messages:
+                formatted_messages.append({"role": m.get("role", "user"), "content": m.get("content", "")})
 
-        return completion.choices[0].message.content or "I apologize, I could not generate a response."
-    except Exception as e:
-        print(f"Copilot Chat error: {e}")
-        return f"Copilot error: {str(e)}"
+            completion = client.chat.completions.create(
+                messages=formatted_messages,
+                model="llama-3.3-70b-versatile",
+                temperature=0.3,
+                max_tokens=600,
+            )
+
+            return completion.choices[0].message.content or "I apologize, I could not generate a response."
+        except Exception as e:
+            print(f"Copilot Chat attempt {attempt + 1}/{max_attempts} failed: {e}")
+            if attempt == max_attempts - 1:
+                return f"PhishGuard Copilot Service Error: {str(e)}"
