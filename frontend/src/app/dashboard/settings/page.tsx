@@ -10,8 +10,7 @@ interface HealthReport {
   timestamp: string;
   overallStatus: "HEALTHY" | "DEGRADED" | "CRITICAL";
   services: {
-    groqAI: { status: string; configured: boolean; message: string };
-    whoisRdap: { status: string; message: string };
+    backendAPI: { status: string; message: string };
     mlEngine: { status: string; message: string };
     ruleEngine: { status: string; message: string };
   };
@@ -27,13 +26,12 @@ export default function SettingsPage() {
       const res = await fetch("/api/health");
       const data = await res.json();
 
-      // Augment the health report with backend engine status
+      // Augment the health report with engine status
       const augmented: HealthReport = {
         timestamp: data.timestamp,
         overallStatus: data.overallStatus,
         services: {
-          groqAI: data.services?.groqAI || { status: "UNKNOWN", configured: false, message: "Checking..." },
-          whoisRdap: data.services?.whoisRdap || { status: "UNKNOWN", message: "Checking..." },
+          backendAPI: data.services?.backendAPI || { status: "UNKNOWN", message: "Checking..." },
           mlEngine: { status: "OK", message: "Scikit-Learn Random Forest model loaded (GridSearchCV tuned)" },
           ruleEngine: { status: "OK", message: "25+ phishing rules active (Typosquatting, Homograph, OTP, KYC, etc.)" },
         },
@@ -94,11 +92,11 @@ export default function SettingsPage() {
               <h3 className="font-semibold text-base">Primary AI Engine Key (Groq API)</h3>
             </div>
             <p className="text-xs text-foreground/60">
-              Groq LLaMA-3.3 XAI API Key configured in <code>frontend/.env.local</code> and <code>backend/.env</code>.
+              Groq LLaMA-3.3 XAI API Key configured on the Python Backend.
             </p>
 
             <div className="p-3 rounded-xl bg-white/5 border border-glass-border text-xs font-mono text-green-400 flex items-center justify-between">
-              <span>GROQ_API_KEY=gsk_j1GKlPjD4... (Configured & Active)</span>
+              <span>GROQ_API_KEY Configured Securely (Backend)</span>
               <CheckCircle2 className="w-4 h-4 text-green-400" />
             </div>
           </div>
@@ -168,28 +166,16 @@ export default function SettingsPage() {
 
               {/* Service Cards (Grid) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Groq AI Card */}
+                {/* Backend AI Card */}
                 <div className="glass-panel p-4 border border-glass-border space-y-2">
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                      <Key className="w-4 h-4 text-primary" />
-                      <h3 className="font-semibold text-sm">Groq AI Engine</h3>
+                      <Server className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold text-sm">Python Backend</h3>
                     </div>
-                    <div>{getStatusBadge(report.services.groqAI.status)}</div>
+                    <div>{getStatusBadge(report.services.backendAPI.status)}</div>
                   </div>
-                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.groqAI.message}</p>
-                </div>
-
-                {/* WHOIS RDAP Card */}
-                <div className="glass-panel p-4 border border-glass-border space-y-2">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <Server className="w-4 h-4 text-cyan-400" />
-                      <h3 className="font-semibold text-sm">WHOIS / RDAP</h3>
-                    </div>
-                    <div>{getStatusBadge(report.services.whoisRdap.status)}</div>
-                  </div>
-                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.whoisRdap.message}</p>
+                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.backendAPI.message}</p>
                 </div>
 
                 {/* ML Engine Card */}
