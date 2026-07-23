@@ -155,3 +155,35 @@ Return ONLY a JSON object with this exact structure:
     except Exception as e:
         print(f"Groq API error: {type(e).__name__}: {e}")
         return fallback
+
+
+def run_copilot_chat(messages: list) -> str:
+    """Runs Copilot chat through Groq LLaMA-3.3."""
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return "I am unable to answer right now because GROQ_API_KEY is not configured on the backend server."
+
+    try:
+        client = Groq(api_key=api_key)
+        system_prompt = (
+            "You are PhishGuard Copilot, an elite AI Cybersecurity Assistant and SOC Threat Analyst "
+            "powered by Groq LLaMA-3.3 XAI. Your mission is to help users understand phishing attacks, "
+            "social engineering, security risks, safe browsing habits, and explain scan findings. "
+            "Keep your answers concise, structured (using bullet points and bold headers), clear, and professional."
+        )
+
+        formatted_messages = [{"role": "system", "content": system_prompt}]
+        for m in messages:
+            formatted_messages.append({"role": m.get("role", "user"), "content": m.get("content", "")})
+
+        completion = client.chat.completions.create(
+            messages=formatted_messages,
+            model="llama-3.3-70b-versatile",
+            temperature=0.3,
+            max_tokens=600,
+        )
+
+        return completion.choices[0].message.content or "I apologize, I could not generate a response."
+    except Exception as e:
+        print(f"Copilot Chat error: {e}")
+        return f"Copilot error: {str(e)}"
