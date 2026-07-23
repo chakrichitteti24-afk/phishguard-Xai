@@ -43,22 +43,14 @@ export default function UrlScannerPage() {
       // Rule Engine → ML → WHOIS → SSL → Risk Score → Groq AI → PDF
       setScanProgress(30);
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort("Request timeout"), 90000);
-
-      const response = await fetch(`${API_URL}/api/v1/scan`, {
+      const response = await fetch(`/api/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "URL",
           payload: url,
         }),
-        signal: controller.signal
       });
-      
-      clearTimeout(timeoutId);
 
       setScanProgress(80);
 

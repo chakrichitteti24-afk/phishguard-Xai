@@ -22,13 +22,7 @@ export async function analyzeUrlWithGroq(
   threatIntel?: ThreatIntelData
 ): Promise<AIAnalysisResult> {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    
-    // Use AbortController for timeouts (90s for Render cold starts)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort("Request timed out"), 90000);
-
-    const response = await fetch(`${API_URL}/api/v1/scan`, {
+    const response = await fetch("/api/scan", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,16 +32,17 @@ export async function analyzeUrlWithGroq(
         payload: url,
         metadata: { ...features }
       }),
-      signal: controller.signal
     });
-    
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`Backend Error: ${response.statusText}`);
     }
 
     const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
 
     // Map FastAPI backend response back to the frontend types
     return {
@@ -62,19 +57,19 @@ export async function analyzeUrlWithGroq(
       pdfBase64: data.pdf_base64,
     };
   } catch (error: any) {
-    console.error("Error communicating with Python Backend:", error);
-    const isAbort = error?.name === "AbortError" || error?.message?.includes("aborted");
+    console.error("Error communicating with Scan Proxy:", error);
+    const isAbort = error?.name === "AbortError" || error?.message?.includes("timeout");
     return {
       error: isAbort 
-        ? "The Render server took longer than expected to wake up from cold start. Please click Scan again!"
-        : error.message || "Failed to reach Python Enterprise Engine",
+        ? "The backend server took longer than expected to wake up from cold start. Please click Scan again!"
+        : error.message || "Failed to reach backend engine",
       analysis: { score: 0, level: "Safe", confidence: 0 },
       explanations: [
         { 
           id: "err_backend", 
           reason: isAbort
             ? "Server cold start timeout. Free hosting servers take ~50s to wake up on first request. Click Scan again to proceed."
-            : "Cannot reach backend. Please verify your NEXT_PUBLIC_API_URL or server status.", 
+            : "Cannot reach backend. Please check network connection or server status.", 
           severity: "critical" 
         }
       ],
