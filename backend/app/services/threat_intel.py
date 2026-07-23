@@ -358,13 +358,53 @@ def check_ssl(url: str) -> dict:
 # ─── Async Orchestrator ────────────────────────────────────────────────────────
 
 async def gather_threat_intel(url: str) -> dict:
-    """Concurrently gathers WHOIS and SSL intelligence."""
+    """Concurrently gathers WHOIS and SSL intelligence with strict 5-second timeouts."""
     loop = asyncio.get_event_loop()
 
     whois_task = loop.run_in_executor(None, check_whois, url)
     ssl_task = loop.run_in_executor(None, check_ssl, url)
 
-    whois_res, ssl_res = await asyncio.gather(whois_task, ssl_task)
+    try:
+        whois_res = await asyncio.wait_for(whois_task, timeout=5.0)
+    except asyncio.TimeoutError:
+        whois_res = {
+            "available": False,
+            "domain": "",
+            "registrar": "Data unavailable",
+            "domain_age_days": 0,
+            "whois_score": 0,
+            "indicators": [],
+            "message": "WHOIS lookup timed out (5s limit).",
+        }
+    except Exception as e:
+        whois_res = {
+            "available": False,
+            "domain": "",
+            "registrar": "Data unavailable",
+            "domain_age_days": 0,
+            "whois_score": 0,
+            "indicators": [],
+            "message": f"WHOIS lookup error: {str(e)[:50]}",
+        }
+
+    try:
+        ssl_res = await asyncio.wait_for(ssl_task, timeout=5.0)
+    except asyncio.TimeoutError:
+        ssl_res = {
+            "available": False,
+            "is_https": False,
+            "ssl_score": 50,
+            "indicators": [],
+            "message": "SSL verification timed out (5s limit).",
+        }
+    except Exception as e:
+        ssl_res = {
+            "available": False,
+            "is_https": False,
+            "ssl_score": 50,
+            "indicators": [],
+            "message": f"SSL verification error: {str(e)[:50]}",
+        }
 
     return {
         "whois": whois_res,

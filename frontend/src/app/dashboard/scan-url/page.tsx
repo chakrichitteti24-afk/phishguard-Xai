@@ -46,7 +46,7 @@ export default function UrlScannerPage() {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const timeoutId = setTimeout(() => controller.abort("Request timeout"), 90000);
 
       const response = await fetch(`${API_URL}/api/v1/scan`, {
         method: "POST",
@@ -101,9 +101,6 @@ export default function UrlScannerPage() {
       setExplanations(data.explanations || []);
       setRecommendations(data.recommendations || []);
 
-      // Use threat intel from backend (WHOIS + SSL already done server-side)
-      setThreatIntel(data.threat_intel_summary || null);
-
       // Save to scan history
       saveScanRecord({
         type: "URL",
@@ -121,11 +118,15 @@ export default function UrlScannerPage() {
       setHasScanned(true);
     } catch (error: any) {
       console.error("Scan execution failed:", error);
-      setErrorMessage(
-        error?.message?.includes("fetch")
-          ? "Cannot reach the Python backend on port 8000. Please ensure the server is running."
-          : error?.message || "An unexpected error occurred during scan execution."
-      );
+      if (error?.name === "AbortError" || error?.message?.includes("aborted")) {
+        setErrorMessage("The Render backend server is waking up from cold-start sleep. Please click Scan once more!");
+      } else {
+        setErrorMessage(
+          error?.message?.includes("fetch")
+            ? "Cannot reach the Python backend. Please ensure the backend is running."
+            : error?.message || "An unexpected error occurred during scan execution."
+        );
+      }
     } finally {
       setIsScanning(false);
       setTimeout(() => setScanProgress(0), 1000);

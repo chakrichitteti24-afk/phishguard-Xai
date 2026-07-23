@@ -24,9 +24,9 @@ export async function analyzeUrlWithGroq(
   try {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     
-    // Use AbortController for timeouts (e.g. 45s for Render cold starts)
+    // Use AbortController for timeouts (90s for Render cold starts)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort("Request timed out"), 90000);
 
     const response = await fetch(`${API_URL}/api/v1/scan`, {
       method: "POST",
@@ -63,13 +63,22 @@ export async function analyzeUrlWithGroq(
     };
   } catch (error: any) {
     console.error("Error communicating with Python Backend:", error);
+    const isAbort = error?.name === "AbortError" || error?.message?.includes("aborted");
     return {
-      error: error.message || "Failed to reach Python Enterprise Engine",
+      error: isAbort 
+        ? "The Render server took longer than expected to wake up from cold start. Please click Scan again!"
+        : error.message || "Failed to reach Python Enterprise Engine",
       analysis: { score: 0, level: "Safe", confidence: 0 },
       explanations: [
-        { id: "err_backend", reason: "Cannot reach FastAPI backend on port 8000. Please ensure the python server is running.", severity: "critical" }
+        { 
+          id: "err_backend", 
+          reason: isAbort
+            ? "Server cold start timeout. Free hosting servers take ~50s to wake up on first request. Click Scan again to proceed."
+            : "Cannot reach backend. Please verify your NEXT_PUBLIC_API_URL or server status.", 
+          severity: "critical" 
+        }
       ],
-      recommendations: ["Start the python backend: `uvicorn app.main:app --reload`"]
+      recommendations: ["Click the Scan button again to retry."]
     };
   }
 }
