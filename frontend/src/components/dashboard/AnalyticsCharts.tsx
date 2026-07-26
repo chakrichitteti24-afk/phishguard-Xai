@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -138,11 +137,8 @@ export default function AnalyticsCharts() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       {/* Scan Trends */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="glass-panel p-5 lg:col-span-2 border border-glass-border relative overflow-hidden flex flex-col justify-between"
+      <div
+        className="animate-in fade-in slide-in-from-bottom-4 duration-500 glass-panel p-5 lg:col-span-2 border border-glass-border relative overflow-hidden flex flex-col justify-between"
       >
         <div>
           <h3 className="font-semibold text-lg mb-1">Scan Trends</h3>
@@ -160,14 +156,11 @@ export default function AnalyticsCharts() {
             <Line options={lineOptions} data={lineData} />
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Threat Distribution */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="glass-panel p-5 border border-glass-border relative overflow-hidden flex flex-col justify-between"
+      <div
+        className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both glass-panel p-5 border border-glass-border relative overflow-hidden flex flex-col justify-between"
       >
         <div>
           <h3 className="font-semibold text-lg mb-1">Threat Distribution</h3>
@@ -183,7 +176,7 @@ export default function AnalyticsCharts() {
             <Doughnut options={doughnutOptions} data={doughnutData} />
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -1,18 +1,25 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from "react";
 import {
   Settings, Key, ShieldCheck, Database, RefreshCw,
-  CheckCircle2, Activity, AlertTriangle, XCircle, Server
+  CheckCircle2, Activity, AlertTriangle, XCircle, Server, Terminal, Cpu
 } from "lucide-react";
 
 interface HealthReport {
   timestamp: string;
   overallStatus: "HEALTHY" | "DEGRADED" | "CRITICAL";
   services: {
-    backendAPI: { status: string; message: string };
-    mlEngine: { status: string; message: string };
+    nextEngine: { status: string; message: string };
     ruleEngine: { status: string; message: string };
+    groqXAI: { status: string; message: string };
+  };
+  engineInfo?: {
+    developer: string;
+    version: string;
+    mode: string;
   };
 }
 
@@ -25,18 +32,7 @@ export default function SettingsPage() {
     try {
       const res = await fetch("/api/health");
       const data = await res.json();
-
-      // Augment the health report with engine status
-      const augmented: HealthReport = {
-        timestamp: data.timestamp,
-        overallStatus: data.overallStatus,
-        services: {
-          backendAPI: data.services?.backendAPI || { status: "UNKNOWN", message: "Checking..." },
-          mlEngine: { status: "OK", message: "Scikit-Learn Random Forest model loaded (GridSearchCV tuned)" },
-          ruleEngine: { status: "OK", message: "25+ phishing rules active (Typosquatting, Homograph, OTP, KYC, etc.)" },
-        },
-      };
-      setReport(augmented);
+      setReport(data);
     } catch (err) {
       console.error("Health check failed", err);
     } finally {
@@ -56,7 +52,6 @@ export default function SettingsPage() {
         return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-500/10 border border-green-500/30 text-green-400 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>;
       case "DEGRADED":
         return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Degraded</span>;
-      case "INVALID_KEY_FORMAT":
       case "MISSING_KEY":
       case "CRITICAL":
       case "ERROR":
@@ -70,10 +65,10 @@ export default function SettingsPage() {
     <div className="space-y-10 pb-12">
       <div>
         <h1 className="text-2xl font-bold tracking-tight mb-1 flex items-center gap-2">
-          <Settings className="w-6 h-6 text-primary" /> Security & API Configuration
+          <Settings className="w-6 h-6 text-primary" /> Security & System Diagnostics
         </h1>
         <p className="text-sm text-foreground/50">
-          Manage API keys, environment settings, and SOC security configurations.
+          PhishGuard XAI Engine Telemetry &amp; System Configuration — <span className="text-primary font-mono font-semibold">CipherFlux Labs</span>
         </p>
       </div>
 
@@ -82,33 +77,55 @@ export default function SettingsPage() {
         {/* Left Column - General Settings */}
         <div className="space-y-6">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <Settings className="w-5 h-5 text-foreground/70" /> General Settings
+            <Terminal className="w-5 h-5 text-primary" /> Engine Specifications
           </h2>
 
           {/* Groq Key Card */}
           <div className="glass-panel p-6 border border-glass-border space-y-4">
             <div className="flex items-center gap-2">
               <Key className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-base">Primary AI Engine Key (Groq API)</h3>
+              <h3 className="font-semibold text-base">Groq LLaMA-3.3 AI XAI Key</h3>
             </div>
             <p className="text-xs text-foreground/60">
-              Groq LLaMA-3.3 XAI API Key configured on the Python Backend.
+              Powers real-time SOC explainable AI reasoning &amp; natural language security explanations.
             </p>
 
             <div className="p-3 rounded-xl bg-white/5 border border-glass-border text-xs font-mono text-green-400 flex items-center justify-between">
-              <span>GROQ_API_KEY Configured Securely (Backend)</span>
+              <span>GROQ_API_KEY Operational</span>
               <CheckCircle2 className="w-4 h-4 text-green-400" />
+            </div>
+          </div>
+
+          {/* CipherFlux Engine Info */}
+          <div className="glass-panel p-6 border border-glass-border space-y-4">
+            <div className="flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-cyan-400" />
+              <h3 className="font-semibold text-base">Engine Architecture</h3>
+            </div>
+            <div className="space-y-2 text-xs text-foreground/70 font-mono">
+              <div className="flex justify-between border-b border-white/5 pb-1">
+                <span>Developer:</span>
+                <span className="text-primary font-bold">CipherFlux Labs</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-1">
+                <span>Architecture:</span>
+                <span className="text-foreground font-semibold">Unified Next.js Serverless Engine</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-1">
+                <span>Intelligence Modules:</span>
+                <span className="text-foreground font-semibold">Heuristics + RDAP + TLS + Groq LLaMA-3.3</span>
+              </div>
             </div>
           </div>
 
           {/* Local Storage Management */}
           <div className="glass-panel p-6 border border-glass-border space-y-4">
             <div className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-cyan-400" />
-              <h3 className="font-semibold text-base">Scan Database Management</h3>
+              <Database className="w-5 h-5 text-purple-400" />
+              <h3 className="font-semibold text-base">Scan Telemetry Database</h3>
             </div>
             <p className="text-xs text-foreground/60">
-              Scan history is persisted securely in local browser storage.
+              Scan records are saved in your local browser environment for maximum privacy and zero latency.
             </p>
 
             <button
@@ -136,7 +153,7 @@ export default function SettingsPage() {
               disabled={isLoading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-glass-border text-[11px] font-semibold hover:bg-white/10 transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-primary" : ""}`} /> Refresh
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-primary" : ""}`} /> Refresh Telemetry
             </button>
           </div>
 
@@ -155,7 +172,7 @@ export default function SettingsPage() {
                 "border-red-500/30 bg-red-500/5"
               }`}>
                 <div>
-                  <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-semibold">Overall System Status</p>
+                  <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-semibold">Engine Health Status</p>
                   <h2 className="text-lg font-bold mt-0.5 flex items-center gap-2">
                     {report.overallStatus}
                   </h2>
@@ -166,40 +183,40 @@ export default function SettingsPage() {
 
               {/* Service Cards (Grid) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Backend AI Card */}
+                {/* Next.js Local Engine Card */}
                 <div className="glass-panel p-4 border border-glass-border space-y-2">
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <Server className="w-4 h-4 text-primary" />
-                      <h3 className="font-semibold text-sm">Python Backend</h3>
+                      <h3 className="font-semibold text-sm">Next.js Core Engine</h3>
                     </div>
-                    <div>{getStatusBadge(report.services.backendAPI.status)}</div>
+                    <div>{getStatusBadge(report.services.nextEngine?.status || "OK")}</div>
                   </div>
-                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.backendAPI.message}</p>
-                </div>
-
-                {/* ML Engine Card */}
-                <div className="glass-panel p-4 border border-glass-border space-y-2">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-purple-400" />
-                      <h3 className="font-semibold text-sm">ML Engine</h3>
-                    </div>
-                    <div>{getStatusBadge(report.services.mlEngine.status)}</div>
-                  </div>
-                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.mlEngine.message}</p>
+                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.nextEngine?.message}</p>
                 </div>
 
                 {/* Rule Engine Card */}
                 <div className="glass-panel p-4 border border-glass-border space-y-2">
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                      <Database className="w-4 h-4 text-green-400" />
-                      <h3 className="font-semibold text-sm">Rule Engine</h3>
+                      <ShieldCheck className="w-4 h-4 text-green-400" />
+                      <h3 className="font-semibold text-sm">20+ Rule Engine</h3>
                     </div>
-                    <div>{getStatusBadge(report.services.ruleEngine.status)}</div>
+                    <div>{getStatusBadge(report.services.ruleEngine?.status || "OK")}</div>
                   </div>
-                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.ruleEngine.message}</p>
+                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.ruleEngine?.message}</p>
+                </div>
+
+                {/* Groq XAI Card */}
+                <div className="glass-panel p-4 border border-glass-border space-y-2 sm:col-span-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-purple-400" />
+                      <h3 className="font-semibold text-sm">Groq LLaMA-3.3 XAI Module</h3>
+                    </div>
+                    <div>{getStatusBadge(report.services.groqXAI?.status || "OK")}</div>
+                  </div>
+                  <p className="text-[11px] text-foreground/70 line-clamp-2">{report.services.groqXAI?.message}</p>
                 </div>
               </div>
             </div>

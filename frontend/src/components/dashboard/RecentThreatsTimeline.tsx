@@ -5,9 +5,6 @@
 import { useEffect, useState } from "react";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { motion } from "framer-motion";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AlertCircle, FileWarning, Globe, ShieldAlert, History } from "lucide-react";
 import Link from "next/link";
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -24,11 +21,8 @@ export default function RecentThreatsTimeline() {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.3 }}
-      className="glass-panel p-5 border border-glass-border h-full flex flex-col justify-between"
+    <div
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both glass-panel p-5 border border-glass-border h-full flex flex-col justify-between"
     >
       <div>
         <h3 className="font-semibold text-lg mb-1">Incident Timeline</h3>
@@ -73,6 +67,6 @@ export default function RecentThreatsTimeline() {
       >
         View Full History
       </Link>
-    </motion.div>
+    </div>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, memo } from "react";
 import { Link2, Mail, QrCode, FileImage, ShieldAlert, History } from "lucide-react";
 import Link from "next/link";
 import { getScanHistory, ScanRecordItem } from "@/lib/scanHistory";
 
-export default function ThreatTable() {
+const ThreatTable = memo(function ThreatTable() {
   const [scans, setScans] = useState<ScanRecordItem[]>([]);
 
   useEffect(() => {
@@ -24,12 +23,7 @@ export default function ThreatTable() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.2 }}
-      className="glass-panel p-5 border border-glass-border overflow-hidden"
-    >
+    <div className="glass-panel p-5 border border-glass-border overflow-hidden animate-in fade-in duration-200">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -37,7 +31,7 @@ export default function ThreatTable() {
           </h3>
           <p className="text-xs text-foreground/50 mt-1">Live log of verified analyzed payloads from scan history.</p>
         </div>
-        <Link href="/dashboard/history" prefetch={true} className="text-xs text-primary hover:underline font-medium">
+        <Link href="/dashboard/history" className="text-xs text-primary hover:underline font-medium">
           View All
         </Link>
       </div>
@@ -49,8 +43,8 @@ export default function ThreatTable() {
           <p className="text-xs text-foreground/40 mt-1">Complete a scan using the URL or Email scanners to log results.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-sm text-left min-w-[500px]">
             <thead className="text-xs text-foreground/60 uppercase bg-white/5 border-b border-glass-border">
               <tr>
                 <th className="px-4 py-3 font-medium rounded-tl-lg">Scan ID</th>
@@ -106,6 +100,8 @@ export default function ThreatTable() {
           </table>
         </div>
       )}
-    </motion.div>
+    </div>
   );
-}
+});
+
+export default ThreatTable;

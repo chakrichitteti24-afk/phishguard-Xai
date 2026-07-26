@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, memo } from "react";
 import { Link2, ShieldCheck, ShieldAlert, AlertTriangle, BrainCircuit, Timer } from "lucide-react";
 import { getDashboardStats } from "@/lib/scanHistory";
 
-export default function OverviewCards() {
+const OverviewCards = memo(function OverviewCards() {
   const [statsData, setStatsData] = useState({
     totalScans: "0",
     safeUrls: "0",
@@ -32,12 +31,9 @@ export default function OverviewCards() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
       {stats.map((stat, index) => (
-        <motion.div
+        <div
           key={index}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-          className={`glass-panel p-4 flex flex-col justify-between h-28 border ${stat.border}`}
+          className={`glass-panel p-4 flex flex-col justify-between h-28 border ${stat.border} animate-in fade-in duration-200`}
         >
           <div className="flex items-start justify-between">
             <p className="text-xs font-medium text-foreground/60">{stat.label}</p>
@@ -46,8 +42,10 @@ export default function OverviewCards() {
             </div>
           </div>
           <p className="text-xl font-bold tracking-tight truncate">{stat.value}</p>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
-}
+});
+
+export default OverviewCards;

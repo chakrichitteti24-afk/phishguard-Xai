@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopNav from "@/components/dashboard/TopNav";
-
 import FloatingCopilot from "@/components/dashboard/copilot/FloatingCopilot";
 
 export default function DashboardLayout({

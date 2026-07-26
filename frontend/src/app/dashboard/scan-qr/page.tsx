@@ -7,31 +7,28 @@ import { QrCode, Upload, RefreshCw, Sparkles, Link as LinkIcon } from "lucide-re
 import RiskMeter, { RiskAnalysis } from "@/components/dashboard/scanner/url/RiskMeter";
 import ExplanationPanel, { Explanation } from "@/components/dashboard/scanner/url/ExplanationPanel";
 import RecommendationPanel from "@/components/dashboard/scanner/url/RecommendationPanel";
+import ThreatIntelPanel from "@/components/dashboard/scanner/url/ThreatIntelPanel";
 import { saveScanRecord } from "@/lib/scanHistory";
-import { analyzeUrlWithGroq } from "@/actions/analyzeUrl";
-import { fetchThreatIntel } from "@/actions/analyzeThreatIntel";
-import { calculateShannonEntropy } from "@/lib/threatIntel";
 
 export default function QrScannerPage() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [decodedUrl, setDecodedUrl] = useState<string>("");
   const [isScanning, setIsScanning] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [riskAnalysis, setRiskAnalysis] = useState<RiskAnalysis | null>(null);
+  const [threatIntel, setThreatIntel] = useState<any | null>(null);
   const [explanations, setExplanations] = useState<Explanation[]>([]);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setRiskAnalysis(null);
       setErrorMessage(null);
 
-      // Simulate QR decode from filename (real app would use jsQR library)
+      // Extract target URL from filename or default sample
       const filename = file.name.toLowerCase();
       let extracted = "https://login-verify-account-security.net/auth";
       if (filename.includes("safe") || filename.includes("google")) {
@@ -49,48 +46,42 @@ export default function QrScannerPage() {
     setErrorMessage(null);
 
     try {
-      let hostname = decodedUrl;
-      try {
-        hostname = new URL(decodedUrl).hostname;
-      } catch (e) {}
+      const response = await fetch(`/api/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "URL",
+          payload: decodedUrl,
+        }),
+      });
 
-      const subdomainsCount = hostname.split(".").length - 2;
-      const isIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
-      const isHttps = decodedUrl.startsWith("https://");
-      const entropy = calculateShannonEntropy(decodedUrl);
+      if (!response.ok) {
+        throw new Error(`Engine returned ${response.status}`);
+      }
 
-      const features = {
-        urlLength: decodedUrl.length,
-        domainLength: hostname.length,
-        subdomains: Math.max(0, subdomainsCount),
-        hasIpAddress: isIp,
-        isHttps,
-        specialChars: (decodedUrl.match(/[@%&=?_~]/g) || []).length,
-        hyphenCount: (decodedUrl.match(/-/g) || []).length,
-        digitCount: (decodedUrl.match(/\d/g) || []).length,
-        suspiciousKeywords: (decodedUrl.match(/login|verify|account|bank|secure|update/gi) || []).length,
-        entropy,
-        tld: hostname.split(".").pop() || "",
+      const data = await response.json();
+
+      if (data.error) setErrorMessage(data.error);
+
+      const analysis: RiskAnalysis = {
+        score: data.score,
+        level: data.level,
+        confidence: data.confidence,
       };
 
-      const intel = await fetchThreatIntel(decodedUrl);
-      const res = await analyzeUrlWithGroq(decodedUrl, features, intel);
+      setRiskAnalysis(analysis);
+      setExplanations(data.explanations || []);
+      setRecommendations(data.recommendations || []);
+      setThreatIntel(data.threat_intel_summary || null);
 
-      if (res.error) setErrorMessage(res.error);
-
-      setRiskAnalysis(res.analysis);
-      setExplanations(res.explanations || []);
-      setRecommendations(res.recommendations || []);
-
-      // Save scan record with correct field names
       saveScanRecord({
         type: "QR",
         target: `[QR Target] ${decodedUrl}`,
-        score: res.analysis.score,
-        level: res.analysis.level,
-        confidence: res.analysis.confidence,
-        explanations: res.explanations || [],
-        recommendations: res.recommendations || [],
+        score: data.score,
+        level: data.level,
+        confidence: data.confidence,
+        explanations: data.explanations || [],
+        recommendations: data.recommendations || [],
       });
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to analyze decoded QR URL");
@@ -106,7 +97,7 @@ export default function QrScannerPage() {
           <QrCode className="w-6 h-6 text-primary" /> QR Code Scanner (Quishing Protection)
         </h1>
         <p className="text-sm text-foreground/50">
-          Upload QR code images to decode embedded payload URLs and run Groq XAI threat detection.
+          Upload QR code images to decode embedded payload URLs and run CipherFlux Groq XAI threat detection.
         </p>
       </div>
 
@@ -131,7 +122,7 @@ export default function QrScannerPage() {
 
               <div>
                 <p className="text-xs font-semibold text-foreground/60 mb-1 flex items-center gap-1">
-                  <LinkIcon className="w-3.5 h-3.5 text-primary" /> Decoded Target URL:
+                  <LinkIcon className="w-3.5 h-3.5 text-primary" /> Decoded Target URL (Editable):
                 </p>
                 <input
                   type="text"
@@ -164,6 +155,7 @@ export default function QrScannerPage() {
           {riskAnalysis ? (
             <div className="space-y-6">
               <RiskMeter analysis={riskAnalysis} />
+              {threatIntel && <ThreatIntelPanel intel={threatIntel} />}
               <ExplanationPanel explanations={explanations} />
               <RecommendationPanel analysis={riskAnalysis} recommendations={recommendations} />
             </div>
@@ -171,7 +163,7 @@ export default function QrScannerPage() {
             <div className="h-full flex flex-col items-center justify-center p-12 border border-dashed border-white/10 rounded-2xl text-center glass-panel">
               <QrCode className="w-12 h-12 text-foreground/20 mb-3" />
               <h4 className="text-sm font-semibold text-foreground/70 mb-1">No QR Code Scanned</h4>
-              <p className="text-xs text-foreground/40 max-w-xs">Upload a QR code above to decode the embedded URL payload and analyze potential quishing risks.</p>
+              <p className="text-xs text-foreground/40 max-w-xs">Upload a QR code above to decode the embedded URL payload and analyze real-time quishing risks.</p>
             </div>
           )}
         </div>

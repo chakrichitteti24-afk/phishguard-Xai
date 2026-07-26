@@ -3,14 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ShieldCheck, Printer, Download, Search, FileText, CheckCircle2, AlertTriangle, XCircle, Calendar, Shield } from "lucide-react";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getScanHistory, ScanRecordItem } from "@/lib/scanHistory";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function ThreatReportsPage() {
@@ -104,14 +98,14 @@ export default function ThreatReportsPage() {
           {selectedScan && (
             <div className="lg:col-span-2 glass-panel p-8 border border-glass-border space-y-6 print:bg-white print:text-black print:p-0 print:border-none">
               
-              {/* Header Header */}
+              {/* Header */}
               <div className="flex items-center justify-between border-b border-glass-border pb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Shield className="w-6 h-6 text-primary" />
                     <span className="font-bold text-xl tracking-tight">PhishGuard XAI SOC Report</span>
                   </div>
-                  <p className="text-xs text-foreground/50">Official Cybersecurity Telemetry & Threat Analysis</p>
+                  <p className="text-xs text-foreground/50">Official CipherFlux Telemetry &amp; Threat Intelligence</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-semibold text-foreground/70">Report ID: #{selectedScan.id}</p>
@@ -122,7 +116,7 @@ export default function ThreatReportsPage() {
               {/* Summary KPIs */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
-                  <p className="text-xs text-foreground/50 font-semibold mb-1">Target</p>
+                  <p className="text-xs text-foreground/50 font-semibold mb-1">Target Payload</p>
                   <p className="text-xs font-bold truncate">{selectedScan.target}</p>
                 </div>
 
@@ -142,15 +136,26 @@ export default function ThreatReportsPage() {
               {/* AI Explanation & Findings */}
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm border-b border-glass-border pb-2">Explainable AI (XAI) Finding Summary</h4>
-                <p className="text-xs text-foreground/80 leading-relaxed p-4 rounded-xl bg-white/5 border border-white/5">
-                  {selectedScan.summary}
-                </p>
+                <div className="text-xs text-foreground/80 leading-relaxed p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                  {selectedScan.summary ? (
+                    <p>{selectedScan.summary}</p>
+                  ) : selectedScan.explanations && selectedScan.explanations.length > 0 ? (
+                    selectedScan.explanations.map((exp, i) => (
+                      <p key={i} className="flex items-start gap-2">
+                        <span className="text-primary font-bold">•</span>
+                        <span>{exp.reason}</span>
+                      </p>
+                    ))
+                  ) : (
+                    <p>Verified scan completed with zero critical phishing triggers detected.</p>
+                  )}
+                </div>
               </div>
 
               {/* Recommendations */}
               {selectedScan.recommendations && selectedScan.recommendations.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm border-b border-glass-border pb-2">Security Guidance & Prevention Rules</h4>
+                  <h4 className="font-semibold text-sm border-b border-glass-border pb-2">Security Guidance &amp; Prevention Rules</h4>
                   <ul className="space-y-2">
                     {selectedScan.recommendations.map((rec, i) => (
                       <li key={i} className="text-xs text-foreground/70 flex items-start gap-2">
@@ -165,7 +170,7 @@ export default function ThreatReportsPage() {
               {/* Signoff */}
               <div className="pt-6 border-t border-glass-border flex items-center justify-between text-[11px] text-foreground/40">
                 <p>Engine: Groq LLaMA-3.3 XAI Threat Pipeline</p>
-                <p>PhishGuard XAI Enterprise v2.0</p>
+                <p>CipherFlux Labs Enterprise v2.5</p>
               </div>
 
             </div>

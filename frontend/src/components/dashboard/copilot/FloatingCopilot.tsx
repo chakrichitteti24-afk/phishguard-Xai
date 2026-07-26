@@ -2,18 +2,12 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useRef, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { BrainCircuit, X, Send, Bot, User, RefreshCw, ShieldAlert, Sparkles } from "lucide-react";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { BrainCircuit, X, Send, Bot, User, RefreshCw, Sparkles } from "lucide-react";
 import { sendCopilotMessage, ChatMessage } from "@/actions/copilotChat";
 
-export default function FloatingCopilot() {
+const FloatingCopilot = memo(function FloatingCopilot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -67,16 +61,14 @@ export default function FloatingCopilot() {
     <>
       {/* Floating Action Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative group p-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-2xl shadow-primary/40 border border-white/20 flex items-center justify-center"
+          className="relative group p-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-2xl shadow-primary/40 border border-white/20 flex items-center justify-center hover:scale-105 transition-transform"
         >
           <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-400 border-2 border-background rounded-full animate-ping" />
           <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-400 border-2 border-background rounded-full" />
           {isOpen ? <X className="w-6 h-6" /> : <BrainCircuit className="w-6 h-6" />}
-        </motion.button>
+        </button>
       </div>
 
       {/* Slide-in Chat Drawer */}
@@ -86,7 +78,7 @@ export default function FloatingCopilot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="fixed bottom-24 right-6 z-50 w-full max-w-md h-[540px] rounded-2xl glass-panel border border-glass-border shadow-2xl flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl"
           >
             {/* Drawer Header */}
@@ -196,4 +188,6 @@ export default function FloatingCopilot() {
       </AnimatePresence>
     </>
   );
-}
+});
+
+export default FloatingCopilot;

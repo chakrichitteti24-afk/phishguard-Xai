@@ -38,9 +38,6 @@ export default function UrlScannerPage() {
     setScanProgress(10);
 
     try {
-      // Send URL directly to the production backend pipeline.
-      // The backend handles: Validation → Normalization → Feature Extraction →
-      // Rule Engine → ML → WHOIS → SSL → Risk Score → Groq AI → PDF
       setScanProgress(30);
 
       const response = await fetch(`/api/scan`, {
@@ -56,7 +53,7 @@ export default function UrlScannerPage() {
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Backend error ${response.status}: ${errText.slice(0, 200)}`);
+        throw new Error(`Engine error ${response.status}: ${errText.slice(0, 200)}`);
       }
 
       const data = await response.json();
@@ -66,14 +63,12 @@ export default function UrlScannerPage() {
         setErrorMessage(data.error);
       }
 
-      // Map backend response to component types
       const riskAnalysis: RiskAnalysis = {
         score: data.score,
         level: data.level,
         confidence: data.confidence,
       };
 
-      // Map backend features to frontend ExtractedFeatures interface
       const backendFeatures = data.features || {};
       const mappedFeatures: ExtractedFeatures = {
         urlLength: backendFeatures.urlLength || url.length,
@@ -92,6 +87,7 @@ export default function UrlScannerPage() {
       setFeatures(mappedFeatures);
       setExplanations(data.explanations || []);
       setRecommendations(data.recommendations || []);
+      setThreatIntel(data.threat_intel_summary || null);
 
       // Save to scan history
       saveScanRecord({
@@ -110,15 +106,7 @@ export default function UrlScannerPage() {
       setHasScanned(true);
     } catch (error: any) {
       console.error("Scan execution failed:", error);
-      if (error?.name === "AbortError" || error?.message?.includes("aborted")) {
-        setErrorMessage("The Render backend server is waking up from cold-start sleep. Please click Scan once more!");
-      } else {
-        setErrorMessage(
-          error?.message?.includes("fetch")
-            ? "Cannot reach the Python backend. Please ensure the backend is running."
-            : error?.message || "An unexpected error occurred during scan execution."
-        );
-      }
+      setErrorMessage(error?.message || "An unexpected error occurred during scan execution.");
     } finally {
       setIsScanning(false);
       setTimeout(() => setScanProgress(0), 1000);
@@ -130,7 +118,7 @@ export default function UrlScannerPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight mb-1">AI URL Scanner</h1>
         <p className="text-sm text-foreground/50">
-          Production-grade phishing detection: Rule Engine + ML + WHOIS + SSL + Groq XAI analysis.
+          CipherFlux Zero-Day Detection: 20+ Heuristic Rules + WHOIS RDAP + TLS Analysis + Groq XAI.
         </p>
       </div>
 
