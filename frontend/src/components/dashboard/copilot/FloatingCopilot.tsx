@@ -60,14 +60,14 @@ const FloatingCopilot = memo(function FloatingCopilot() {
   return (
     <>
       {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative group p-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-2xl shadow-primary/40 border border-white/20 flex items-center justify-center hover:scale-105 transition-transform"
+          className="relative group p-3.5 sm:p-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white shadow-2xl shadow-primary/40 border border-white/20 flex items-center justify-center hover:scale-105 transition-transform"
         >
           <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-400 border-2 border-background rounded-full animate-ping" />
           <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-400 border-2 border-background rounded-full" />
-          {isOpen ? <X className="w-6 h-6" /> : <BrainCircuit className="w-6 h-6" />}
+          {isOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
       </div>
 
@@ -79,7 +79,7 @@ const FloatingCopilot = memo(function FloatingCopilot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="fixed bottom-24 right-6 z-50 w-full max-w-md h-[540px] rounded-2xl glass-panel border border-glass-border shadow-2xl flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl"
+            className="fixed bottom-20 sm:bottom-24 left-3 right-3 sm:left-auto sm:right-6 z-50 w-auto sm:w-[420px] h-[calc(100vh-100px)] max-h-[540px] rounded-2xl glass-panel border border-glass-border shadow-2xl flex flex-col overflow-hidden bg-background/95 backdrop-blur-xl"
           >
             {/* Drawer Header */}
             <div className="p-4 border-b border-glass-border bg-gradient-to-r from-primary/10 to-secondary/10 flex items-center justify-between">
